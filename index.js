@@ -4,11 +4,57 @@ import axios from 'axios';
 
 const app = fastify({ logger: true });
 
-app.get('/', async (req, res) => {
+const getCatFacts = async () => {
+  try {
+    const response = await axios.get(
+      'https://cat-fact.herokuapp.com/facts/random',
+      {
+        params: {
+          animal_type: 'cat',
+          amount: 3,
+        },
+      },
+    );
+    return response.data.map((catFact) => catFact.text);
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
+
+const getRandomFox = async () => {
+  try {
+    const response = await axios.get('https://randomfox.ca/floof/');
+    return response.data.image;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
+
+const getPublicHolidays = async (country) => {
+  try {
+    const response = await axios.get(
+      `https://date.nager.at/api/v2/PublicHolidays/2021/${country}`,
+    );
+    return response.data;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
+
+app.post('/', async (req, res) => {
+  const [catFacts, foxPicture, holidays] = await Promise.all([
+    getCatFacts(),
+    getRandomFox(),
+    getPublicHolidays(req.body?.countryCode ?? ''),
+  ]);
+
   return {
-    message: `Welcome to Node Babel with ${
-      req.body?.testValue ?? 'no testValue'
-    }`,
+    foxPicture,
+    catFacts,
+    holidays,
   };
 });
 
